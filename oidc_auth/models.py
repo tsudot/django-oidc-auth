@@ -1,8 +1,13 @@
+import string
+import hashlib
+import random
 import json
 from base64 import b64decode
 from urlparse import urljoin
 import requests
-from django.db import models
+from django.db import models, IntegrityError
+
+from .settings import oidc_settings
 
 
 def _get_issuer(token):
@@ -22,6 +27,30 @@ def _get_issuer(token):
 
     return json.loads(claims)['iss']
 
+
+class Nonce(models.Model):
+    issuer_url = models.URLField()
+    hash = models.CharField(max_length=255, unique=True)
+
+    def __unicode__(self):
+        return 'Nonce: %s' % self.hash
+
+    @classmethod
+    def generate(cls, issuer, length=oidc_settings.NONCE_LENGTH):
+        CHARS = string.letters + string.digits
+
+        for _ in range(5):
+            sequence = ''.join(random.choice(CHARS) for n in range(length))
+            _hash = hashlib.sha1(sequence).hexdigest()
+
+            if not cls.objects.filter(hash=_hash).exists():
+                try:
+                    cls.objects.create(issuer_url=issuer, hash=_hash)
+                    return _hash
+                except IntegrityError:
+                    pass
+        
+        raise RuntimeError()  # TODO fix this, error maximum retries
 
 class OpenIDProvider(models.Model):
     issuer = models.URLField(unique=True)

@@ -8,6 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'Nonce'
+        db.create_table(u'oidc_auth_nonce', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('issuer_url', self.gf('django.db.models.fields.URLField')(max_length=200)),
+            ('hash', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
+        ))
+        db.send_create_signal(u'oidc_auth', ['Nonce'])
+
         # Adding model 'OpenIDProvider'
         db.create_table(u'oidc_auth_openidprovider', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -21,11 +29,20 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Deleting model 'Nonce'
+        db.delete_table(u'oidc_auth_nonce')
+
         # Deleting model 'OpenIDProvider'
         db.delete_table(u'oidc_auth_openidprovider')
 
 
     models = {
+        u'oidc_auth.nonce': {
+            'Meta': {'object_name': 'Nonce'},
+            'hash': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'issuer_url': ('django.db.models.fields.URLField', [], {'max_length': '200'})
+        },
         u'oidc_auth.openidprovider': {
             'Meta': {'object_name': 'OpenIDProvider'},
             'authorization_endpoint': ('django.db.models.fields.URLField', [], {'max_length': '200'}),

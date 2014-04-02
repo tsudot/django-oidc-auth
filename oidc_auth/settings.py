@@ -6,7 +6,8 @@ DEFAULTS = {
     'DEFAULT_ENDPOINT': None,
     'SCOPES': ('openid', 'profile', 'email'),
     'CLIENT_ID': None,
-    'CLIENT_SECRET': None
+    'CLIENT_SECRET': None,
+    'NONCE_LENGTH': 8
 }
 
 USER_SETTINGS = getattr(settings, 'OIDC_AUTH', {})

@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from . import utils
 from .settings import oidc_settings
 from .forms import OpenIDConnectForm
-from .models import OpenIDProvider
+from .models import OpenIDProvider, Nonce
 
 
 def login_begin(request, template_name='oidc/login.html',
@@ -35,6 +35,7 @@ def _redirect(request, login_complete_view, form_class):
         'scope': utils.scopes(),
         'redirect_uri': request.build_absolute_uri(reverse(login_complete_view)),
         'client_id': oidc_settings.CLIENT_ID,
+        'state': Nonce.generate(provider.issuer)
     })
 
     return redirect('%s?%s' % (provider.authorization_endpoint, params))

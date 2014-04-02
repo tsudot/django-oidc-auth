@@ -39,7 +39,7 @@ class TestAuthorizationPhase(OIDCTestCase):
 
         params = parse_qs(redirect_url.query)
         tools.assert_equal(set(params.keys()),
-            {'response_type', 'scope', 'redirect_uri', 'client_id'})
+            {'response_type', 'scope', 'redirect_uri', 'client_id', 'state'})
 
     @mock.patch('requests.get')
     def test_login_default_endpoint(self, get_mock):
