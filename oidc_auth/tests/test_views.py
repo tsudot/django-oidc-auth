@@ -40,4 +40,17 @@ class TestAuthorizationPhase(OIDCTestCase):
         params = parse_qs(redirect_url.query)
         tools.assert_equal(set(params.keys()),
             {'response_type', 'scope', 'redirect_uri', 'client_id'})
-        
+
+    @mock.patch('requests.get')
+    def test_login_default_endpoint(self, get_mock):
+        configs = dict(self.configs,
+                authorization_endpoint='http://default.example.it/authorize')
+        get_mock.return_value.status_code = 200
+        get_mock.return_value.json.return_value = configs
+
+        with oidc_settings.override(DEFAULT_ENDPOINT='http://default.example.it'):
+            response = self.client.get('/oidc/login/')
+    
+        tools.assert_equal(response.status_code, 302)
+        redirect_url = urlparse(response['Location'])
+        tools.assert_equal('default.example.it', redirect_url.hostname)
