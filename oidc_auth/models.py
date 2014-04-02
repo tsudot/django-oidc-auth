@@ -38,6 +38,11 @@ class OpenIDProvider(models.Model):
         if not issuer:
             issuer = _get_issuer(credentials['id_token'])
 
+        try:
+            return cls.objects.get(issuer=issuer)
+        except cls.DoesNotExist:
+            pass
+
         discover_endpoint = urljoin(issuer, '.well-known/openid-configuration')
         response = requests.get(discover_endpoint)
 

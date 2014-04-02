@@ -58,3 +58,12 @@ class TestOpenIDPRovider(object):
         
         get_issuer_mock.assert_called_with(credentials['id_token'])
         self.assert_provider_valid(provider)
+
+    @mock.patch('requests.get')
+    def test_discover_existing_provider(self, get_mock):
+        existing_provider = OpenIDProvider.objects.create(issuer='http://example.it')
+        get_mock.return_value = self.response_mock
+
+        found_provider = OpenIDProvider.discover(issuer='http://example.it')
+
+        tools.assert_equal(found_provider.id, existing_provider.id)
