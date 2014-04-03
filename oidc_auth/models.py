@@ -6,8 +6,13 @@ from base64 import b64decode
 from urlparse import urljoin
 import requests
 from django.db import models, IntegrityError
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from jwkest.jwk import load_jwks
 
 from .settings import oidc_settings
+
+UserModel = get_user_model()
 
 
 def _get_issuer(token):
@@ -48,7 +53,8 @@ class Nonce(models.Model):
 
             if not cls.objects.filter(hash=_hash).exists():
                 try:
-                    cls.objects.create(issuer_url=issuer, hash=_hash)
+                    cls.objects.create(issuer_url=issuer, hash=_hash,
+                            redirect_url=redirect_url)
                     return _hash
                 except IntegrityError:
                     pass
@@ -101,3 +107,50 @@ class OpenIDProvider(models.Model):
     @property
     def client_credentials(self):
         return self.client_id, self.client_secret
+
+    def signing_keys(self):
+        return load_jwks(requests.get(self.jwks_uri).text)
+
+
+class OpenIDUser(models.Model):
+    sub = models.CharField(max_length=255, unique=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='oidc_account')
+    issuer = models.ForeignKey(OpenIDProvider)
+    profile = models.URLField()
+
+    @classmethod
+    def get_or_create(cls, id_token, access_token, refresh_token, provider):
+        try:
+            return cls.objects.get(sub=id_token['sub'])
+        except cls.DoesNotExist:
+            pass
+
+        email, profile = cls._get_userinfo(provider, id_token['sub'],
+                access_token, refresh_token)
+
+        try:
+            user = UserModel()
+            user.username = email
+            user.set_unusable_password()
+            user.save()
+        except IntegrityError:
+            user = UserModel.objects.get(username=email)
+
+        return cls.objects.create(sub=id_token['sub'], issuer=provider,
+                user=user, profile=profile)
+
+    @classmethod
+    def _get_userinfo(self, provider, sub, access_token, refresh_token):
+        response = requests.get(provider.userinfo_endpoint, headers={
+            'Authorization': 'Bearer %s' % access_token
+        })
+
+        if response.status_code != 200:
+            raise RuntimeError()  # TODO fix this
+
+        claims = response.json()
+
+        if claims['sub'] != sub:
+            raise RuntimeError('Invalid sub')  # TODO fix this
+
+        return claims['email'], claims['profile']

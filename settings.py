@@ -87,7 +87,13 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 SOUTH_TESTS_MIGRATE = False
 
-#AUTHENTICATION_BACKENDS = (
-#    'django_oidc_client.auth.OIDCBackend',
-#    'django.contrib.auth.backends.ModelBackend',
-#)
+AUTHENTICATION_BACKENDS = (
+    'oidc_auth.auth.OpenIDConnectBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+LOGIN_URL = '/oidc/login/'
+
+OIDC_AUTH = {
+    'DEFAULT_ENDPOINT': 'https://connect-op.heroku.com/'
+}
