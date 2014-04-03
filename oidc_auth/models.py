@@ -59,6 +59,9 @@ class OpenIDProvider(models.Model):
     userinfo_endpoint = models.URLField()
     jwks_uri = models.URLField()
 
+    client_id = models.CharField(max_length=255)
+    client_secret = models.CharField(max_length=255)
+
     @classmethod
     def discover(cls, issuer=None, credentials={}, save=True):
         if not (issuer or credentials):
@@ -91,3 +94,7 @@ class OpenIDProvider(models.Model):
             provider.save()
 
         return provider
+
+    @property
+    def client_credentials(self):
+        return self.client_id, self.client_secret
