@@ -23,6 +23,8 @@ def _get_issuer(token):
     """
 
     _, jwt, _ = token.split('.')
+    jwt = jwt + ('=' * (len(jwt) % 4))
+
     claims = b64decode(jwt)
 
     return json.loads(claims)['iss']
