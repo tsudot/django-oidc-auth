@@ -40,7 +40,7 @@ Finally, add this to your *urls.py*:
 
 Run `python manage.py migrate` and you're ready (*kinda*).
 
-
+<!--
 #TODO
 #----
 #
@@ -49,3 +49,4 @@ Run `python manage.py migrate` and you're ready (*kinda*).
 #Grava os endpoints.
 #
 #Segundo, faz o register e então inicia o trabalho de autenticação
+-->
