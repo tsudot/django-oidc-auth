@@ -33,12 +33,13 @@ def _get_issuer(token):
 class Nonce(models.Model):
     issuer_url = models.URLField()
     hash = models.CharField(max_length=255, unique=True)
+    redirect_url = models.CharField(max_length=100)
 
     def __unicode__(self):
         return 'Nonce: %s' % self.hash
 
     @classmethod
-    def generate(cls, issuer, length=oidc_settings.NONCE_LENGTH):
+    def generate(cls, redirect_url, issuer, length=oidc_settings.NONCE_LENGTH):
         CHARS = string.letters + string.digits
 
         for _ in range(5):

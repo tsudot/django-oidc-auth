@@ -38,6 +38,7 @@ def _redirect(request, login_complete_view, form_class):
         'redirect_uri': request.build_absolute_uri(reverse(login_complete_view)),
         'client_id': oidc_settings.CLIENT_ID,
         'state': Nonce.generate(provider.issuer)
+        'state': Nonce.generate(request.GET.get('next', ''), provider.issuer)
     })
 
     return redirect('%s?%s' % (provider.authorization_endpoint, params))
