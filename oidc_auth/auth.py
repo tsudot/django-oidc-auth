@@ -1,5 +1,3 @@
-import json
-from jwkest.jws import JWS
 from django.contrib.auth import get_user_model
 
 from .models import OpenIDProvider, OpenIDUser
@@ -18,19 +16,16 @@ class OpenIDConnectBackend(object):
             return None
 
     def authenticate(self, **kwargs):
-        try:
-            credentials = kwargs.get('credentials')
-            if not credentials:
-                return None
-    
-            provider = OpenIDProvider.discover(credentials=credentials)
-            id_token = JWS().verify_compact(credentials['id_token'], provider.signing_keys())
+        credentials = kwargs.get('credentials')
+        if not credentials:
+            return None
 
-            oidc_user = OpenIDUser.get_or_create(json.loads(id_token),
-                    credentials['access_token'],
-                    credentials.get('refresh_token', ''),
-                    provider)
-        except Exception as e:
-            import ipdb; ipdb.set_trace()
+        provider = OpenIDProvider.discover(credentials=credentials)
+        id_token = provider.verify_id_token(credentials['id_token'])
+
+        oidc_user = OpenIDUser.get_or_create(id_token,
+                credentials['access_token'],
+                credentials.get('refresh_token', ''),
+                provider)
 
         return oidc_user.user
