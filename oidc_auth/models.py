@@ -1,5 +1,4 @@
 import string
-import hashlib
 import random
 import json
 from base64 import b64decode
@@ -49,17 +48,13 @@ class Nonce(models.Model):
 
         for _ in range(5):
             sequence = ''.join(random.choice(CHARS) for n in range(length))
-            _hash = hashlib.sha1(sequence).hexdigest()
 
-            if not cls.objects.filter(hash=_hash).exists():
-                try:
-                    cls.objects.create(issuer_url=issuer, hash=_hash,
-                            redirect_url=redirect_url)
-                    return _hash
-                except IntegrityError:
-                    pass
-        
-        raise RuntimeError()  # TODO fix this, error maximum retries
+            try:
+                return cls.objects.create(issuer_url=issuer, sequence=sequence,
+                        redirect_url=redirect_url)
+            except IntegrityError:
+                pass
+
 
 class OpenIDProvider(models.Model):
     issuer = models.URLField(unique=True)
