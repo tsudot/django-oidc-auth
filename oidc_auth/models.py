@@ -58,6 +58,9 @@ class OpenIDProvider(models.Model):
     client_id = models.CharField(max_length=255)
     client_secret = models.CharField(max_length=255)
 
+    def __unicode__(self):
+        return self.issuer
+
     @classmethod
     def discover(cls, issuer=None, credentials={}, save=True):
         if not (issuer or credentials):
@@ -138,6 +141,9 @@ class OpenIDUser(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='oidc_account')
     issuer = models.ForeignKey(OpenIDProvider)
     profile = models.URLField()
+
+    def __unicode__(self):
+        return '%s: %s' % (self.sub, self.user)
 
     @classmethod
     def get_or_create(cls, id_token, access_token, refresh_token, provider):
