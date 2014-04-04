@@ -129,9 +129,8 @@ class OpenIDProvider(models.Model):
         we're looking for.
         """
         _, jwt, _ = token.split('.')
-        claims = b64decode(jwt)
 
-        return json.loads(claims)['iss']
+        return b64decode(jwt)['iss']
 
 
 class OpenIDUser(models.Model):
