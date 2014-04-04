@@ -97,7 +97,7 @@ class OpenIDProvider(models.Model):
 
     @property
     def signing_keys(self):
-        if self.signing_alg == self.HS256:
+        if self.signing_alg == self.RS256:
             return load_jwks(requests.get(self.jwks_uri).text)
 
         return [SYMKey(key=self.client_secret)]
