@@ -25,6 +25,7 @@ Then add this to your settings:
     }
 
     LOGIN_URL = 'oidc-login'
+    LOGIN_REDIRECT_URL = '/'
 
     AUTHENTICATION_BACKENDS = (
         'oidc_auth.auth.OpenIDConnectBackend',
