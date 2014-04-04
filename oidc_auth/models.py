@@ -1,37 +1,21 @@
 import string
 import random
 import json
-from base64 import b64decode
 from urlparse import urljoin
 import requests
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from jwkest.jwk import load_jwks
+from jwkest.jws import JWS
+from jwkest.jwk import SYMKey
 
+from . import errors
 from .settings import oidc_settings
+from .utils import b64decode
 
 UserModel = get_user_model()
 
-
-def _get_issuer(token):
-    """Parses an id_token and returns its issuer.
-    
-    An id_token is a string containing 3 b64-encrypted hashes,
-    joined by a dot, like:
-
-        <header>.<claims>.<signature>
-
-    We only need to parse the claims, which contains the 'iss' field
-    we're looking for.
-    """
-
-    _, jwt, _ = token.split('.')
-    jwt = jwt + ('=' * (len(jwt) % 4))
-
-    claims = b64decode(jwt)
-
-    return json.loads(claims)['iss']
 
 
 class Nonce(models.Model):
@@ -57,11 +41,19 @@ class Nonce(models.Model):
 
 
 class OpenIDProvider(models.Model):
+    RS256 = 'RS256'
+    HS256 = 'HS256'
+    SIGNING_ALGS = (
+        (RS256, 'RS256'),
+        (HS256, 'HS256'),
+    )
+
     issuer = models.URLField(unique=True)
     authorization_endpoint = models.URLField()
     token_endpoint = models.URLField()
     userinfo_endpoint = models.URLField()
     jwks_uri = models.URLField()
+    signing_alg = models.CharField(max_length=5, choices=SIGNING_ALGS, default=RS256)
 
     client_id = models.CharField(max_length=255)
     client_secret = models.CharField(max_length=255)
@@ -72,7 +64,7 @@ class OpenIDProvider(models.Model):
             raise ValueError('You should provide either an issuer or credentials')
 
         if not issuer:
-            issuer = _get_issuer(credentials['id_token'])
+            issuer = cls._get_issuer(credentials['id_token'])
 
         try:
             return cls.objects.get(issuer=issuer)
@@ -103,8 +95,43 @@ class OpenIDProvider(models.Model):
     def client_credentials(self):
         return self.client_id, self.client_secret
 
+    @property
     def signing_keys(self):
-        return load_jwks(requests.get(self.jwks_uri).text)
+        if self.signing_alg == self.HS256:
+            return load_jwks(requests.get(self.jwks_uri).text)
+
+        return [SYMKey(key=self.client_secret)]
+
+    def verify_id_token(self, token):
+        header, claims, signature = token.split('.')
+        header = b64decode(header)
+        claims = b64decode(claims)
+
+        if not signature:
+            raise errors.InvalidIdToken()
+
+        if header['alg'] not in ['HS256', 'RS256']:
+            raise errors.UnsuppportedSigningmethod(header['alg'], ['HS256', 'RS256'])
+
+        id_token = JWS().verify_compact(token, self.signing_keys)
+        return json.loads(id_token)
+
+    @staticmethod
+    def _get_issuer(token):
+        """Parses an id_token and returns its issuer.
+
+        An id_token is a string containing 3 b64-encrypted hashes,
+        joined by a dot, like:
+
+            <header>.<claims>.<signature>
+
+        We only need to parse the claims, which contains the 'iss' field
+        we're looking for.
+        """
+        _, jwt, _ = token.split('.')
+        claims = b64decode(jwt)
+
+        return json.loads(claims)['iss']
 
 
 class OpenIDUser(models.Model):

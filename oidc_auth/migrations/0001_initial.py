@@ -25,6 +25,7 @@ class Migration(SchemaMigration):
             ('token_endpoint', self.gf('django.db.models.fields.URLField')(max_length=200)),
             ('userinfo_endpoint', self.gf('django.db.models.fields.URLField')(max_length=200)),
             ('jwks_uri', self.gf('django.db.models.fields.URLField')(max_length=200)),
+            ('signing_alg', self.gf('django.db.models.fields.CharField')(default='RS256', max_length=5)),
             ('client_id', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('client_secret', self.gf('django.db.models.fields.CharField')(max_length=255)),
         ))
@@ -104,6 +105,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'issuer': ('django.db.models.fields.URLField', [], {'unique': 'True', 'max_length': '200'}),
             'jwks_uri': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
+            'signing_alg': ('django.db.models.fields.CharField', [], {'default': "'RS256'", 'max_length': '5'}),
             'token_endpoint': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
             'userinfo_endpoint': ('django.db.models.fields.URLField', [], {'max_length': '200'})
         },
