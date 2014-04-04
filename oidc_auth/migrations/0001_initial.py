@@ -12,7 +12,7 @@ class Migration(SchemaMigration):
         db.create_table(u'oidc_auth_nonce', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('issuer_url', self.gf('django.db.models.fields.URLField')(max_length=200)),
-            ('hash', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
+            ('state', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
             ('redirect_url', self.gf('django.db.models.fields.CharField')(max_length=100)),
         ))
         db.send_create_signal(u'oidc_auth', ['Nonce'])
@@ -92,10 +92,10 @@ class Migration(SchemaMigration):
         },
         u'oidc_auth.nonce': {
             'Meta': {'object_name': 'Nonce'},
-            'hash': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'issuer_url': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
-            'redirect_url': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+            'redirect_url': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'state': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'})
         },
         u'oidc_auth.openidprovider': {
             'Meta': {'object_name': 'OpenIDProvider'},

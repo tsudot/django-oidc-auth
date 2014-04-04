@@ -20,7 +20,7 @@ UserModel = get_user_model()
 
 class Nonce(models.Model):
     issuer_url = models.URLField()
-    hash = models.CharField(max_length=255, unique=True)
+    state = models.CharField(max_length=255, unique=True)
     redirect_url = models.CharField(max_length=100)
 
     def __unicode__(self):
@@ -31,10 +31,10 @@ class Nonce(models.Model):
         CHARS = string.letters + string.digits
 
         for _ in range(5):
-            sequence = ''.join(random.choice(CHARS) for n in range(length))
+            _hash = ''.join(random.choice(CHARS) for n in range(length))
 
             try:
-                return cls.objects.create(issuer_url=issuer, sequence=sequence,
+                return cls.objects.create(issuer_url=issuer, state=_hash,
                         redirect_url=redirect_url)
             except IntegrityError:
                 pass

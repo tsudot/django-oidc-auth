@@ -17,12 +17,12 @@ def login_begin(request, template_name='oidc/login.html',
         redirect_field_name=REDIRECT_FIELD_NAME):
 
     if oidc_settings.DEFAULT_ENDPOINT or request.method == 'POST':
-        return _redirect(request, login_complete_view, form_class)
+        return _redirect(request, login_complete_view, form_class, redirect_field_name)
 
     return render(request, template_name)
 
 
-def _redirect(request, login_complete_view, form_class):
+def _redirect(request, login_complete_view, form_class, redirect_field_name):
     redirect_url = oidc_settings.DEFAULT_ENDPOINT
     if not redirect_url:
         form = form_class(request.POST)
@@ -32,12 +32,14 @@ def _redirect(request, login_complete_view, form_class):
             raise RuntimeError()  # TODO fix this
 
     provider = OpenIDProvider.discover(issuer=redirect_url)
+    redirect_url = request.GET.get(redirect_field_name, settings.LOGIN_REDIRECT_URL)
+    nonce = Nonce.generate(redirect_url, provider.issuer)
     params = urlencode({
         'response_type': 'code',
         'scope': utils.scopes(),
         'redirect_uri': request.build_absolute_uri(reverse(login_complete_view)),
         'client_id': provider.client_id,
-        'state': Nonce.generate(request.GET.get('next', ''), provider.issuer)
+        'state': nonce.state
     })
 
     return redirect('%s?%s' % (provider.authorization_endpoint, params))
@@ -47,7 +49,7 @@ def login_complete(request, login_complete_view='oidc-complete'):
     if 'code' not in request.GET and 'state' not in request.GET:
         return HttpResponseBadRequest('Invalid request')
 
-    nonce = Nonce.objects.get(hash=request.GET['state'])
+    nonce = Nonce.objects.get(state=request.GET['state'])
     issuer = nonce.issuer_url
     provider = OpenIDProvider.objects.get(issuer=issuer)
 
@@ -65,7 +67,7 @@ def login_complete(request, login_complete_view='oidc-complete'):
         user = authenticate(credentials=response.json())
         django_login(request, user)
 
-        return redirect(nonce.redirect_url or '/')
+        return redirect(nonce.redirect_url)
 
     from django.http import HttpResponse
     return HttpResponse('Fail!')
