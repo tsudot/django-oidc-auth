@@ -24,3 +24,7 @@ class RequestError(OpenIDConnectError):
     def __init__(self, url, status_code):
         message = 'GET %s returned %s status code (200 expected)' % (url, status_code)
         super(RequestError, self).__init__(message)
+
+
+class InvalidUserInfo(OpenIDConnectError):
+    message = 'The received sub does not match the value found in the ID token'

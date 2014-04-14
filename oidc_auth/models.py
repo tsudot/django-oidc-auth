@@ -186,6 +186,6 @@ class OpenIDUser(models.Model):
         claims = response.json()
 
         if claims['sub'] != sub:
-            raise RuntimeError('Invalid sub')  # TODO fix this
+            raise errors.InvalidUserInfo()
 
         return claims['email'], claims['profile']
