@@ -78,7 +78,7 @@ class OpenIDProvider(models.Model):
         response = requests.get(discover_endpoint)
 
         if response.status_code != 200:
-            raise RuntimeError()  # TODO change this
+            raise errors.RequestError(discover_endpoint, response.status_code)
 
         configs = response.json()
         provider = cls()
@@ -181,7 +181,7 @@ class OpenIDUser(models.Model):
         })
 
         if response.status_code != 200:
-            raise RuntimeError()  # TODO fix this
+            raise errors.RequestError(provider.userinfo_endpoint, response.status_code)
 
         claims = response.json()
 
