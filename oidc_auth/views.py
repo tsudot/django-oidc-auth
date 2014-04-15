@@ -8,6 +8,7 @@ import requests
 
 from . import errors
 from . import utils
+from .utils import log
 from .settings import oidc_settings
 from .forms import OpenIDConnectForm
 from .models import OpenIDProvider, Nonce
@@ -21,6 +22,7 @@ def login_begin(request, template_name='oidc/login.html',
     if oidc_settings.DEFAULT_ENDPOINT or request.method == 'POST':
         return _redirect(request, login_complete_view, form_class, redirect_field_name)
 
+    log.debug('Rendering login template at %s' % template_name)
     return render(request, template_name)
 
 
@@ -35,7 +37,10 @@ def _redirect(request, login_complete_view, form_class, redirect_field_name):
 
     provider = OpenIDProvider.discover(issuer=redirect_url)
     redirect_url = request.GET.get(redirect_field_name, settings.LOGIN_REDIRECT_URL)
+
     nonce = Nonce.generate(redirect_url, provider.issuer)
+    request.session['oidc_state'] = nonce.state
+
     params = urlencode({
         'response_type': 'code',
         'scope': utils.scopes(),
@@ -43,16 +48,22 @@ def _redirect(request, login_complete_view, form_class, redirect_field_name):
         'client_id': provider.client_id,
         'state': nonce.state
     })
+    redirect_url = '%s?%s' % (provider.authorization_endpoint, params)
 
-    return redirect('%s?%s' % (provider.authorization_endpoint, params))
+    log.debug('Redirecting to %s' % redirect_url)
+    return redirect(redirect_url)
 
 
 def login_complete(request, login_complete_view='oidc-complete'):
     if 'code' not in request.GET and 'state' not in request.GET:
         return HttpResponseBadRequest('Invalid request')
 
+    if request.GET['state'] != request.session['oidc_state']:
+        raise errors.ForbiddenAuthRequest()
+
     nonce = Nonce.objects.get(state=request.GET['state'])
     provider = nonce.provider
+    log.debug('Login started from provider %s' % provider)
 
     params = {
         'grant_type': 'authorization_code',
@@ -64,11 +75,11 @@ def login_complete(request, login_complete_view='oidc-complete'):
                              auth=provider.client_credentials,
                              params=params)
 
-    if response.status_code == 200:
-        user = authenticate(credentials=response.json())
-        django_login(request, user)
+    if response.status_code != 200:
+        raise errors.RequestError(provider.token_endpoint, response.status_code)
 
-        return redirect(nonce.redirect_url)
+    log.debug('Token exchange done, proceeding authentication')
+    user = authenticate(credentials=response.json())
+    django_login(request, user)
 
-    from django.http import HttpResponse
-    return HttpResponse('Fail!')
+    return redirect(nonce.redirect_url)
