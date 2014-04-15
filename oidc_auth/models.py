@@ -197,14 +197,13 @@ class OpenIDUser(models.Model):
         email, profile = cls._get_userinfo(provider, id_token['sub'],
                 access_token, refresh_token)
 
-        # TODO reverse logic for this (better ask for forgiveness?)
         try:
+            user = UserModel.objects.get(username=email)
+        except UserModel.DoesNotExist:
             user = UserModel()
             user.username = email
             user.set_unusable_password()
             user.save()
-        except IntegrityError:
-            user = UserModel.objects.get(username=email)
 
         log.debug("OpenIDUser for sub %s not found, so it'll be created" % id_token['sub'])
         return cls.objects.create(sub=id_token['sub'], issuer=provider,
