@@ -6,7 +6,7 @@ import requests
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from jwkest.jwk import load_jwks
+from jwkest.jwk import load_jwks_from_url
 from jwkest.jws import JWS
 from jwkest.jwk import SYMKey
 
@@ -106,7 +106,8 @@ class OpenIDProvider(models.Model):
     @property
     def signing_keys(self):
         if self.signing_alg == self.RS256:
-            return load_jwks(requests.get(self.jwks_uri).text)
+            # TODO perform caching, OBVIOUS
+            return load_jwks_from_url(self.jwks_uri)
 
         return [SYMKey(key=self.client_secret)]
 
