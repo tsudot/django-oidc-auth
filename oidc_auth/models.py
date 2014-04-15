@@ -151,7 +151,11 @@ class OpenIDUser(models.Model):
     @classmethod
     def get_or_create(cls, id_token, access_token, refresh_token, provider):
         try:
-            return cls.objects.get(sub=id_token['sub'])
+            obj = cls.objects.get(sub=id_token['sub'])
+            obj.access_token = access_token
+            obj.refresh_token = refresh_token
+            obj.save()
+            return obj
         except cls.DoesNotExist:
             pass
 
@@ -167,7 +171,8 @@ class OpenIDUser(models.Model):
             user = UserModel.objects.get(username=email)
 
         return cls.objects.create(sub=id_token['sub'], issuer=provider,
-                user=user, profile=profile)
+                user=user, profile=profile, access_token=access_token,
+                refresh_token=refresh_token)
 
     @classmethod
     def _get_userinfo(self, provider, sub, access_token, refresh_token):
