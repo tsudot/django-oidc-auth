@@ -1,4 +1,5 @@
 import django
+import logging
 django_version = django.get_version()
 
 DEBUG = True
@@ -103,3 +104,8 @@ LOGIN_URL = '/oidc/login/'
 OIDC_AUTH = {
     'DEFAULT_ENDPOINT': 'https://connect-op.heroku.com/'
 }
+
+
+oidc_auth_log = logging.getLogger('oidc_auth')
+oidc_auth_log.setLevel(logging.DEBUG)
+oidc_auth_log.addHandler(logging.StreamHandler())
