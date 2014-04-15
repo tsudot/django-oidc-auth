@@ -12,7 +12,7 @@ from jwkest.jwk import SYMKey
 
 from . import errors
 from .settings import oidc_settings
-from .utils import b64decode
+from .utils import log, b64decode
 
 UserModel = get_user_model()
 
@@ -32,14 +32,19 @@ class Nonce(models.Model):
         """
         CHARS = string.letters + string.digits
 
-        for _ in range(5):
+        for i in range(5):
             _hash = ''.join(random.choice(CHARS) for n in range(length))
 
             try:
+                log.debug('Attempt %s to save nonce %s to issuer %s' % (i+1,
+                    _hash, issuer))
                 return cls.objects.create(issuer_url=issuer, state=_hash,
                         redirect_url=redirect_url)
             except IntegrityError:
                 pass
+
+        log.debug('Maximum of retries to create a nonce to issuer %s '
+                  'exceeded! Max: 5' % issuer)
 
 
 class OpenIDProvider(models.Model):
@@ -75,10 +80,13 @@ class OpenIDProvider(models.Model):
             issuer = cls._get_issuer(credentials['id_token'])
 
         try:
-            return cls.objects.get(issuer=issuer)
+            provider = cls.objects.get(issuer=issuer)
+            log.debug('Provider %s already discovered' % issuer)
+            return provider
         except cls.DoesNotExist:
             pass
 
+        log.debug('Provider %s not discovered yet, proceed discovery' % issuer)
         discover_endpoint = urljoin(issuer, '.well-known/openid-configuration')
         response = requests.get(discover_endpoint)
 
@@ -97,6 +105,7 @@ class OpenIDProvider(models.Model):
         if save:
             provider.save()
 
+        log.debug('Provider %s succesfully discovered' % issuer)
         return provider
 
     @property
@@ -112,6 +121,7 @@ class OpenIDProvider(models.Model):
         return [SYMKey(key=self.client_secret)]
 
     def verify_id_token(self, token):
+        log.debug('Verifying token %s' % token)
         header, claims, signature = token.split('.')
         header = b64decode(header)
         claims = b64decode(claims)
@@ -120,9 +130,10 @@ class OpenIDProvider(models.Model):
             raise errors.InvalidIdToken()
 
         if header['alg'] not in ['HS256', 'RS256']:
-            raise errors.UnsuppportedSigningmethod(header['alg'], ['HS256', 'RS256'])
+            raise errors.UnsuppportedSigningMethod(header['alg'], ['HS256', 'RS256'])
 
         id_token = JWS().verify_compact(token, self.signing_keys)
+        log.debug('Token verified, %s' % id_token)
         return json.loads(id_token)
 
     @staticmethod
@@ -157,10 +168,12 @@ class OpenIDUser(models.Model):
     @classmethod
     def get_or_create(cls, id_token, access_token, refresh_token, provider):
         try:
+            # TODO is that right?
             obj = cls.objects.get(sub=id_token['sub'])
             obj.access_token = access_token
             obj.refresh_token = refresh_token
             obj.save()
+            log.debug('OpenIDUser found, sub %s' % obj.sub)
             return obj
         except cls.DoesNotExist:
             pass
@@ -168,6 +181,7 @@ class OpenIDUser(models.Model):
         email, profile = cls._get_userinfo(provider, id_token['sub'],
                 access_token, refresh_token)
 
+        # TODO reverse logic for this (better ask for forgiveness?)
         try:
             user = UserModel()
             user.username = email
@@ -176,12 +190,16 @@ class OpenIDUser(models.Model):
         except IntegrityError:
             user = UserModel.objects.get(username=email)
 
+        log.debug("OpenIDUser for sub %s not found, so it'll be created" % id_token['sub'])
         return cls.objects.create(sub=id_token['sub'], issuer=provider,
                 user=user, profile=profile, access_token=access_token,
                 refresh_token=refresh_token)
 
     @classmethod
     def _get_userinfo(self, provider, sub, access_token, refresh_token):
+        # TODO encapsulate this?
+        log.debug('Requesting userinfo in %s. sub: %s, access_token: %s' % (
+            provider.userinfo_endpoint, sub, access_token))
         response = requests.get(provider.userinfo_endpoint, headers={
             'Authorization': 'Bearer %s' % access_token
         })
@@ -194,4 +212,6 @@ class OpenIDUser(models.Model):
         if claims['sub'] != sub:
             raise errors.InvalidUserInfo()
 
+        log.debug('userinfo of sub: %s -> email: %s, profile: %s' % (sub,
+            claims['email'], claims['profile']))
         return claims['email'], claims['profile']
