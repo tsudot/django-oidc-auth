@@ -1,3 +1,4 @@
+from .utils import log
 
 
 class OpenIDConnectError(RuntimeError):
@@ -5,6 +6,7 @@ class OpenIDConnectError(RuntimeError):
         if not message:
             message = getattr(self, 'message', '')
 
+        log.error(message)
         super(OpenIDConnectError, self).__init__(message)
 
 
