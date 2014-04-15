@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 import requests
 
+from . import errors
 from . import utils
 from .settings import oidc_settings
 from .forms import OpenIDConnectForm
@@ -25,12 +26,12 @@ def login_begin(request, template_name='oidc/login.html',
 
 def _redirect(request, login_complete_view, form_class, redirect_field_name):
     redirect_url = oidc_settings.DEFAULT_ENDPOINT
-    if not redirect_url:
-        form = form_class(request.POST)
-        if form.is_valid():
-            redirect_url = form.cleaned_data['issuer']
-        else:
-            raise RuntimeError()  # TODO fix this
+    form = form_class(request.POST)
+
+    if not redirect_url and form.is_valid():
+        redirect_url = form.cleaned_data['issuer']
+    else:
+        raise errors.MissingRedirectURL()
 
     provider = OpenIDProvider.discover(issuer=redirect_url)
     redirect_url = request.GET.get(redirect_field_name, settings.LOGIN_REDIRECT_URL)

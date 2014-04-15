@@ -30,3 +30,11 @@ class RequestError(OpenIDConnectError):
 
 class InvalidUserInfo(OpenIDConnectError):
     message = 'The received sub does not match the value found in the ID token'
+
+
+class ForbiddenAuthRequest(OpenIDConnectError):
+    message = 'querystring state differs from state saved on session'
+
+
+class MissingRedirectURL(OpenIDConnectError):
+    message = 'Missing URL for oidc redirect (maybe DEFAULT_ENDPOINT missing on settings?)'
