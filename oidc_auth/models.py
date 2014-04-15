@@ -142,6 +142,9 @@ class OpenIDUser(models.Model):
     issuer = models.ForeignKey(OpenIDProvider)
     profile = models.URLField()
 
+    access_token = models.CharField(max_length=255)
+    refresh_token = models.CharField(max_length=255)
+
     def __unicode__(self):
         return '%s: %s' % (self.sub, self.user)
 
