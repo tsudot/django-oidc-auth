@@ -17,7 +17,6 @@ from .utils import b64decode
 UserModel = get_user_model()
 
 
-
 class Nonce(models.Model):
     issuer_url = models.URLField()
     state = models.CharField(max_length=255, unique=True)
@@ -28,6 +27,9 @@ class Nonce(models.Model):
 
     @classmethod
     def generate(cls, redirect_url, issuer, length=oidc_settings.NONCE_LENGTH):
+        """This method generates and returns a nonce, an unique generated
+        string. If the maximum of retries is exceeded, it returns None.
+        """
         CHARS = string.letters + string.digits
 
         for _ in range(5):
@@ -63,6 +65,9 @@ class OpenIDProvider(models.Model):
 
     @classmethod
     def discover(cls, issuer=None, credentials={}, save=True):
+        """Returns a known OIDC Endpoint. If it doesn't exist in the database,
+        then it'll fetch its data according to OpenID Connect Discovery spec.
+        """
         if not (issuer or credentials):
             raise ValueError('You should provide either an issuer or credentials')
 
