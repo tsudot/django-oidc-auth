@@ -1,4 +1,5 @@
 from urllib import urlencode
+from django.conf import settings
 from django.http import HttpResponseBadRequest
 from django.contrib.auth import REDIRECT_FIELD_NAME, authenticate, login as django_login
 from django.core.urlresolvers import reverse
