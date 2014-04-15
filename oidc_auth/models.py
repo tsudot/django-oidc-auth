@@ -23,7 +23,11 @@ class Nonce(models.Model):
     redirect_url = models.CharField(max_length=100)
 
     def __unicode__(self):
-        return 'Nonce: %s' % self.hash
+        return '%s' % self.state
+
+    def __init__(self, *args, **kwargs):
+        self._provider = None
+        super(Nonce, self).__init__(*args, **kwargs)
 
     @classmethod
     def generate(cls, redirect_url, issuer, length=oidc_settings.NONCE_LENGTH):
@@ -45,6 +49,18 @@ class Nonce(models.Model):
 
         log.debug('Maximum of retries to create a nonce to issuer %s '
                   'exceeded! Max: 5' % issuer)
+
+    @property
+    def provider(self):
+        """This method will fetch the related provider from the database
+        and cache it inside an object var.
+        """
+        provider = self._provider
+
+        if not provider:
+            provider = OpenIDProvider.objects.get(issuer=self.issuer_url)
+
+        return provider
 
 
 class OpenIDProvider(models.Model):

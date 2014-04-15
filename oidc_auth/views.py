@@ -52,8 +52,7 @@ def login_complete(request, login_complete_view='oidc-complete'):
         return HttpResponseBadRequest('Invalid request')
 
     nonce = Nonce.objects.get(state=request.GET['state'])
-    issuer = nonce.issuer_url
-    provider = OpenIDProvider.objects.get(issuer=issuer)
+    provider = nonce.provider
 
     params = {
         'grant_type': 'authorization_code',
