@@ -55,7 +55,14 @@ def _redirect(request, login_complete_view, form_class, redirect_field_name):
     return redirect(redirect_url)
 
 
-def login_complete(request, login_complete_view='oidc-complete'):
+def login_complete(request, login_complete_view='oidc-complete',
+        error_template_name='oidc/error.html'):
+
+    if 'error' in request.GET:
+        return render(request, error_template_name, {
+            'error': request.GET['error']
+        })
+
     if 'code' not in request.GET and 'state' not in request.GET:
         return HttpResponseBadRequest('Invalid request')
 
