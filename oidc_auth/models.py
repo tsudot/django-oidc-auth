@@ -134,7 +134,7 @@ class OpenIDProvider(models.Model):
             # TODO perform caching, OBVIOUS
             return load_jwks_from_url(self.jwks_uri)
 
-        return [SYMKey(key=self.client_secret)]
+        return [SYMKey(key=str(self.client_secret))]
 
     def verify_id_token(self, token):
         log.debug('Verifying token %s' % token)
