@@ -205,7 +205,7 @@ class OpenIDUser(models.Model):
             user = UserModel()
 
             user.username = claims['preferred_username']
-            user.email = claims['emails']
+            user.email = claims['email']
             user.first_name = claims['given_name']
             user.last_name = claims['family_name']
             user.set_unusable_password()
