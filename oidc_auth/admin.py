@@ -9,7 +9,7 @@ class OpenIDProviderAdmin(admin.ModelAdmin):
 
 
 class OpenIDUserAdmin(admin.ModelAdmin):
-    list_display = ('sub', 'user', 'profile')
+    list_display = ('sub', 'user')
     list_filter = ('issuer',)
 
 
