@@ -35,9 +35,10 @@ class Migration(SchemaMigration):
         db.create_table(u'oidc_auth_openiduser', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('sub', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
-            ('user', self.gf('django.db.models.fields.related.OneToOneField')(related_name='oidc_account', unique=True, to=orm['auth.User'])),
             ('issuer', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['oidc_auth.OpenIDProvider'])),
-            ('profile', self.gf('django.db.models.fields.URLField')(max_length=200)),
+            ('user', self.gf('django.db.models.fields.related.OneToOneField')(related_name='oidc_account', unique=True, to=orm['auth.User'])),
+            ('access_token', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('refresh_token', self.gf('django.db.models.fields.CharField')(max_length=255)),
         ))
         db.send_create_signal(u'oidc_auth', ['OpenIDUser'])
 
@@ -111,9 +112,10 @@ class Migration(SchemaMigration):
         },
         u'oidc_auth.openiduser': {
             'Meta': {'object_name': 'OpenIDUser'},
+            'access_token': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'issuer': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['oidc_auth.OpenIDProvider']"}),
-            'profile': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
+            'refresh_token': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'sub': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'oidc_account'", 'unique': 'True', 'to': u"orm['auth.User']"})
         }

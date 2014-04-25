@@ -4,7 +4,7 @@ from django.conf import settings
 
 DEFAULTS = {
     'DEFAULT_ENDPOINT': None,
-    'SCOPES': ('openid', 'profile', 'email'),
+    'SCOPES': ('openid', 'given_name', 'family_name', 'preferred_username', 'email'),
     'CLIENT_ID': None,
     'CLIENT_SECRET': None,
     'NONCE_LENGTH': 8

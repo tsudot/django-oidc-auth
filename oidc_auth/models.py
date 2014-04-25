@@ -171,9 +171,9 @@ class OpenIDProvider(models.Model):
 
 class OpenIDUser(models.Model):
     sub = models.CharField(max_length=255, unique=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='oidc_account')
     issuer = models.ForeignKey(OpenIDProvider)
-    profile = models.URLField()
+    user = models.OneToOneField(settings.AUTH_USER_MODEL,
+            related_name='oidc_account')
 
     access_token = models.CharField(max_length=255)
     refresh_token = models.CharField(max_length=255)
@@ -184,31 +184,37 @@ class OpenIDUser(models.Model):
     @classmethod
     def get_or_create(cls, id_token, access_token, refresh_token, provider):
         try:
-            # TODO is that right?
-            obj = cls.objects.get(sub=id_token['sub'])
-            obj.access_token = access_token
-            obj.refresh_token = refresh_token
-            obj.save()
-            log.debug('OpenIDUser found, sub %s' % obj.sub)
-            return obj
+            oidc_acc = cls.objects.get(sub=id_token['sub'])
+
+            # Updating with new tokens
+            oidc_acc.access_token = access_token
+            oidc_acc.refresh_token = refresh_token
+            oidc_acc.save()
+
+            log.debug('OpenIDUser found, sub %s' % oidc_acc.sub)
+            return oidc_acc
         except cls.DoesNotExist:
             pass
 
-        email, profile = cls._get_userinfo(provider, id_token['sub'],
+        claims = cls._get_userinfo(provider, id_token['sub'],
                 access_token, refresh_token)
 
         try:
-            user = UserModel.objects.get(username=email)
+            user = UserModel.objects.get(username=claims['preferred_username'])
         except UserModel.DoesNotExist:
             user = UserModel()
-            user.username = email
+
+            user.username = claims['preferred_username']
+            user.email = claims['emails']
+            user.first_name = claims['given_name']
+            user.last_name = claims['family_name']
             user.set_unusable_password()
+
             user.save()
 
         log.debug("OpenIDUser for sub %s not found, so it'll be created" % id_token['sub'])
         return cls.objects.create(sub=id_token['sub'], issuer=provider,
-                user=user, profile=profile, access_token=access_token,
-                refresh_token=refresh_token)
+                user=user, access_token=access_token, refresh_token=refresh_token)
 
     @classmethod
     def _get_userinfo(self, provider, sub, access_token, refresh_token):
@@ -227,6 +233,8 @@ class OpenIDUser(models.Model):
         if claims['sub'] != sub:
             raise errors.InvalidUserInfo()
 
-        log.debug('userinfo of sub: %s -> email: %s, profile: %s' % (sub,
-            claims['email'], claims['profile']))
-        return claims['email'], claims['profile']
+        name = '%s %s' % (claims['given_name'], claims['family_name'])
+        log.debug('userinfo of sub: %s -> name: %s, preferred_username: %s, email: %s' % (sub,
+            name, claims['preferred_username'], claims['email']))
+
+        return claims
