@@ -7,7 +7,7 @@ from .settings import oidc_settings
 
 def scopes():
     _scopes = set(oidc_settings.SCOPES)
-    _scopes.update({'openid', 'profile', 'email'})
+    _scopes.update({'openid', 'email', 'preferred_username'})
 
     return ' '.join(_scopes)
 

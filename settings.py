@@ -102,7 +102,7 @@ AUTHENTICATION_BACKENDS = (
 LOGIN_URL = '/oidc/login/'
 
 OIDC_AUTH = {
-    'DEFAULT_ENDPOINT': 'https://connect-op.heroku.com/'
+    'DEFAULT_ENDPOINT': 'http://localhost:8000/'
 }
 
 
