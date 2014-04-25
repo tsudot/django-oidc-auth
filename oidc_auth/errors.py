@@ -37,4 +37,4 @@ class ForbiddenAuthRequest(OpenIDConnectError):
 
 
 class MissingRedirectURL(OpenIDConnectError):
-    message = 'Missing URL for oidc redirect (maybe DEFAULT_ENDPOINT missing on settings?)'
+    message = "Missing URL for oidc redirect (maybe DEFAULT_ENDPOINT's missing on settings?)"

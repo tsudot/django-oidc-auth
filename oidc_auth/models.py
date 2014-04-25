@@ -75,7 +75,7 @@ class OpenIDProvider(models.Model):
     authorization_endpoint = models.URLField()
     token_endpoint = models.URLField()
     userinfo_endpoint = models.URLField()
-    jwks_uri = models.URLField()
+    jwks_uri = models.URLField(null=True, blank=True)
     signing_alg = models.CharField(max_length=5, choices=SIGNING_ALGS, default=RS256)
 
     client_id = models.CharField(max_length=255)
