@@ -169,6 +169,18 @@ class OpenIDProvider(models.Model):
         return b64decode(claims)['iss']
 
 
+def get_default_provider():
+    args = oidc_settings.DEFAULT_PROVIDER
+
+    if not args:
+        return
+
+    try:
+        return OpenIDProvider.objects.get(issuer=args['issuer'])
+    except OpenIDProvider.DoesNotExist:
+        return OpenIDProvider.objects.create(**args)
+
+
 class OpenIDUser(models.Model):
     sub = models.CharField(max_length=255, unique=True)
     issuer = models.ForeignKey(OpenIDProvider)

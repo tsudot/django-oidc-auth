@@ -11,7 +11,7 @@ from . import utils
 from .utils import log
 from .settings import oidc_settings
 from .forms import OpenIDConnectForm
-from .models import OpenIDProvider, Nonce
+from .models import OpenIDProvider, get_default_provider, Nonce
 
 
 def login_begin(request, template_name='oidc/login.html',
@@ -27,7 +27,7 @@ def login_begin(request, template_name='oidc/login.html',
 
 
 def _redirect(request, login_complete_view, form_class, redirect_field_name):
-    provider = utils.get_default_provider()
+    provider = get_default_provider()
 
     if not provider:
         form = form_class(request.POST)
