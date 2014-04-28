@@ -102,7 +102,14 @@ AUTHENTICATION_BACKENDS = (
 LOGIN_URL = '/oidc/login/'
 
 OIDC_AUTH = {
-    'DEFAULT_ENDPOINT': 'http://localhost:8000/'
+    'DEFAULT_PROVIDER': {
+        'issuer': 'http://localhost:8000/',
+        'authorization_endpoint': 'http://localhost:8000/o/authorize/',
+        'token_endpoint': 'http://localhost:8000/o/token/',
+        'userinfo_endpoint': 'http://localhost:8000/o/userinfo/',
+        'client_id': 'abcdef',
+        'client_secret': '123456'
+    }
 }
 
 

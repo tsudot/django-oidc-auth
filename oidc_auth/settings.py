@@ -3,7 +3,7 @@ from django.conf import settings
 
 
 DEFAULTS = {
-    'DEFAULT_ENDPOINT': None,
+    'DEFAULT_PROVIDER': {},
     'SCOPES': ('openid', 'given_name', 'family_name', 'preferred_username', 'email'),
     'CLIENT_ID': None,
     'CLIENT_SECRET': None,

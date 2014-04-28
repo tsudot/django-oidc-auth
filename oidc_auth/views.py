@@ -19,7 +19,7 @@ def login_begin(request, template_name='oidc/login.html',
         login_complete_view='oidc-complete',
         redirect_field_name=REDIRECT_FIELD_NAME):
 
-    if oidc_settings.DEFAULT_ENDPOINT or request.method == 'POST':
+    if oidc_settings.DEFAULT_PROVIDER or request.method == 'POST':
         return _redirect(request, login_complete_view, form_class, redirect_field_name)
 
     log.debug('Rendering login template at %s' % template_name)
@@ -27,18 +27,17 @@ def login_begin(request, template_name='oidc/login.html',
 
 
 def _redirect(request, login_complete_view, form_class, redirect_field_name):
-    redirect_url = oidc_settings.DEFAULT_ENDPOINT
+    provider = utils.get_default_provider()
 
-    if not redirect_url:
+    if not provider:
         form = form_class(request.POST)
-        if form.is_valid():
-            redirect_url = form.cleaned_data['issuer']
-        else:
+
+        if not form.is_valid():
             raise errors.MissingRedirectURL()
 
-    provider = OpenIDProvider.discover(issuer=redirect_url)
-    redirect_url = request.GET.get(redirect_field_name, settings.LOGIN_REDIRECT_URL)
+        provider = OpenIDProvider.discover(issuer=form.cleaned_data['issuer'])
 
+    redirect_url = request.GET.get(redirect_field_name, settings.LOGIN_REDIRECT_URL)
     nonce = Nonce.generate(redirect_url, provider.issuer)
     request.session['oidc_state'] = nonce.state
 

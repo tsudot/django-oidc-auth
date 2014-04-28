@@ -18,5 +18,18 @@ def b64decode(token):
     return json.loads(decoded)
 
 
+def get_default_provider():
+    from .models import OpenIDProvider
+    args = oidc_settings.DEFAULT_PROVIDER
+
+    if not args:
+        return
+
+    try:
+        return OpenIDProvider.objects.get(issuer=args['issuer'])
+    except OpenIDProvider.DoesNotExist:
+        return OpenIDProvider.objects.create(**args)
+
+
 log = logging.getLogger('oidc_auth')
 log.addHandler(logging.NullHandler())
