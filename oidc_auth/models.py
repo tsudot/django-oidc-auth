@@ -85,7 +85,7 @@ class OpenIDProvider(models.Model):
         return self.issuer
 
     @classmethod
-    def discover(cls, issuer=None, credentials={}, save=True):
+    def discover(cls, issuer='', credentials={}, save=True):
         """Returns a known OIDC Endpoint. If it doesn't exist in the database,
         then it'll fetch its data according to OpenID Connect Discovery spec.
         """
@@ -164,9 +164,9 @@ class OpenIDProvider(models.Model):
         We only need to parse the claims, which contains the 'iss' field
         we're looking for.
         """
-        _, jwt, _ = token.split('.')
+        _, claims, _ = token.split('.')
 
-        return b64decode(jwt)['iss']
+        return b64decode(claims)['iss']
 
 
 class OpenIDUser(models.Model):
