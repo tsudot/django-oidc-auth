@@ -25,9 +25,14 @@ class OIDCSettings(object):
         if attr not in self.defaults:
             raise AttributeError('Invalid oidc_auth setting: %s' % attr)
 
-        return (self.patched_settings.get(attr)
-                or self.user_settings.get(attr)
-                or self.defaults[attr])
+        if attr in self.patched_settings:
+            val = self.patched_settings[attr]
+        elif attr in self.user_settings:
+            val = self.user_settings[attr]
+        else:
+            val = self.defaults[attr]
+
+        return val
 
     @contextmanager
     def override(self, **kwargs):
