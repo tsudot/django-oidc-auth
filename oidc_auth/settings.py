@@ -3,7 +3,7 @@ from django.conf import settings
 
 
 DEFAULTS = {
-    'DISABLE_OIDC_ON_DEBUG': True,
+    'DISABLE_OIDC': False,
     'DEFAULT_PROVIDER': {},
     'SCOPES': ('openid', 'given_name', 'family_name', 'preferred_username', 'email'),
     'CLIENT_ID': None,

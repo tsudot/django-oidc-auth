@@ -97,7 +97,7 @@ def _redirect_to_provider(request):
     whether a request should be redirected to the provider or not.
     """
 
-    oidc_disabled = oidc_settings.DISABLE_OIDC_ON_DEBUG and settings.DEBUG
     has_default_provider = oidc_settings.DEFAULT_PROVIDER
 
-    return not oidc_disabled and (has_default_provider or request.method == 'POST')
+    return (not oidc_settings.DISABLE_OIDC
+            and (has_default_provider or request.method == 'POST'))
