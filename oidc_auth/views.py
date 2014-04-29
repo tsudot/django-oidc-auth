@@ -19,7 +19,7 @@ def login_begin(request, template_name='oidc/login.html',
         login_complete_view='oidc-complete',
         redirect_field_name=REDIRECT_FIELD_NAME):
 
-    if oidc_settings.DEFAULT_PROVIDER or request.method == 'POST':
+    if _redirect_to_provider(request):
         return _redirect(request, login_complete_view, form_class, redirect_field_name)
 
     log.debug('Rendering login template at %s' % template_name)
@@ -90,3 +90,14 @@ def login_complete(request, login_complete_view='oidc-complete',
     django_login(request, user)
 
     return redirect(nonce.redirect_url)
+
+
+def _redirect_to_provider(request):
+    """Just a syntax sugar for login_begin. Returns True or False
+    whether a request should be redirected to the provider or not.
+    """
+
+    oidc_disabled = oidc_settings.DISABLE_OIDC_ON_DEBUG and settings.DEBUG
+    has_default_provider = oidc_settings.DEFAULT_PROVIDER
+
+    return not oidc_disabled and (has_default_provider or request.method == 'POST')
