@@ -102,7 +102,7 @@ class OpenIDProvider(models.Model):
         except cls.DoesNotExist:
             pass
 
-        log.debug('Provider %s not discovered yet, proceed discovery' % issuer)
+        log.debug('Provider %s not discovered yet, proceeding discovery' % issuer)
         discover_endpoint = urljoin(issuer, '.well-known/openid-configuration')
         response = requests.get(discover_endpoint)
 
@@ -206,25 +206,29 @@ class OpenIDUser(models.Model):
             log.debug('OpenIDUser found, sub %s' % oidc_acc.sub)
             return oidc_acc
         except cls.DoesNotExist:
-            pass
+            log.debug("OpenIDUser for sub %s not found, so it'll be created" % id_token['sub'])
 
-        claims = cls._get_userinfo(provider, id_token['sub'],
-                access_token, refresh_token)
-
+        # Find an existing User locally or create a new one
         try:
-            user = UserModel.objects.get(username=claims['preferred_username'])
+            user = UserModel.objects.get(username=id_token['sub'])
+            log.debug('Found user with username %s locally' % id_token['sub'])
         except UserModel.DoesNotExist:
+            log.debug('User with username %s not found locally, '
+                      'so it will be created' % id_token['sub'])
+
+            claims = cls._get_userinfo(provider, id_token['sub'],
+                    access_token, refresh_token)
+
             user = UserModel()
 
-            user.username = claims['preferred_username']
-            user.email = claims['email']
+            user.username   = claims['preferred_username']
+            user.email      = claims['email']
             user.first_name = claims['given_name']
-            user.last_name = claims['family_name']
+            user.last_name  = claims['family_name']
             user.set_unusable_password()
 
             user.save()
 
-        log.debug("OpenIDUser for sub %s not found, so it'll be created" % id_token['sub'])
         return cls.objects.create(sub=id_token['sub'], issuer=provider,
                 user=user, access_token=access_token, refresh_token=refresh_token)
 
