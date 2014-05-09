@@ -8,7 +8,8 @@ DEFAULTS = {
     'SCOPES': ('openid', 'given_name', 'family_name', 'preferred_username', 'email'),
     'CLIENT_ID': None,
     'CLIENT_SECRET': None,
-    'NONCE_LENGTH': 8
+    'NONCE_LENGTH': 8,
+    'VERIFY_SSL': True
 }
 
 USER_SETTINGS = getattr(settings, 'OIDC_AUTH', {})
