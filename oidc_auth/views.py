@@ -86,6 +86,8 @@ def login_complete(request, login_complete_view='oidc-complete',
         raise errors.RequestError(provider.token_endpoint, response.status_code)
 
     log.debug('Token exchange done, proceeding authentication')
+    credentials = response.json()
+    credentials['provider'] = provider
     user = authenticate(credentials=response.json())
     django_login(request, user)
 

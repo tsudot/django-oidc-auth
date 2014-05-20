@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 
 from .utils import log
-from .models import OpenIDProvider, OpenIDUser
+from .models import OpenIDUser
 
 UserModel = get_user_model()
 
@@ -22,7 +22,7 @@ class OpenIDConnectBackend(object):
             if not credentials:
                 return None
 
-            provider = OpenIDProvider.discover(credentials=credentials)
+            provider = credentials['provider']
             id_token = provider.verify_id_token(credentials['id_token'])
 
             oidc_user = OpenIDUser.get_or_create(id_token,
