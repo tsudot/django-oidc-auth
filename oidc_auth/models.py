@@ -104,7 +104,7 @@ class OpenIDProvider(models.Model):
 
         log.debug('Provider %s not discovered yet, proceeding discovery' % issuer)
         discover_endpoint = urljoin(issuer, '.well-known/openid-configuration')
-        response = requests.get(discover_endpoint)
+        response = requests.get(discover_endpoint, verify=oidc_settings.VERIFY_SSL)
 
         if response.status_code != 200:
             raise errors.RequestError(discover_endpoint, response.status_code)
@@ -239,7 +239,7 @@ class OpenIDUser(models.Model):
             provider.userinfo_endpoint, sub, access_token))
         response = requests.get(provider.userinfo_endpoint, headers={
             'Authorization': 'Bearer %s' % access_token
-        })
+        }, verify=oidc_settings.VERIFY_SSL)
 
         if response.status_code != 200:
             raise errors.RequestError(provider.userinfo_endpoint, response.status_code)
