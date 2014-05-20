@@ -88,7 +88,7 @@ def login_complete(request, login_complete_view='oidc-complete',
     log.debug('Token exchange done, proceeding authentication')
     credentials = response.json()
     credentials['provider'] = provider
-    user = authenticate(credentials=response.json())
+    user = authenticate(credentials=credentials)
     django_login(request, user)
 
     return redirect(nonce.redirect_url)
