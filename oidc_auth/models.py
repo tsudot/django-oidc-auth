@@ -175,10 +175,26 @@ def get_default_provider():
     if not args:
         return
 
-    try:
-        return OpenIDProvider.objects.get(issuer=args['issuer'])
-    except OpenIDProvider.DoesNotExist:
-        return OpenIDProvider.objects.create(**args)
+    issuer = args.pop('issuer')
+    provider, created = OpenIDProvider.objects.get_or_create(issuer=issuer, defaults=args)
+
+    if created:
+        return provider
+
+    # Test if the object is up-to-date
+    should_update = False
+    fields = ['authorization_endpoint', 'token_endpoint',
+              'userinfo_endpoint', 'client_id', 'client_secret']
+
+    for field in fields:
+        if getattr(provider, field) != args[field]:
+            should_update = True
+            setattr(provider, field, args[field])
+
+    if should_update:
+        provider.save()
+
+    return provider
 
 
 class OpenIDUser(models.Model):
