@@ -175,7 +175,7 @@ def get_default_provider():
     if not args:
         return
 
-    issuer = args.pop('issuer')
+    issuer = args.get('issuer')
     provider, created = OpenIDProvider.objects.get_or_create(issuer=issuer, defaults=args)
 
     if created:
