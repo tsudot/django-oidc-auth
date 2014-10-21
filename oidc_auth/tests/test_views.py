@@ -46,6 +46,10 @@ class TestAuthorizationPhase(OIDCTestCase):
         tools.assert_equal(set(params.keys()),
             {'response_type', 'scope', 'client_id', 'state'})
 
+    def test_login_complete_without_oidc_session(self):
+        response = self.client.get('/oidc/complete')  # without oidc_state in session *on purpose*
+        tools.assert_equal(response.status_code, 301)
+
     @mock.patch('requests.get')
     def test_login_default_provider(self, get_mock):
         configs = dict(self.configs,
@@ -72,6 +76,10 @@ class TestTokenExchangePhase(OIDCTestCase):
         self.client.cookies[settings.SESSION_COOKIE_NAME] = store.session_key
 
     def test_invalid_request(self):
+        session = self.client.session
+        session['oidc_state'] = 'foobar'
+        session.save()
+
         tools.assert_equal(400, self.client.post('/oidc/complete/').status_code)
         tools.assert_equal(400, self.client.post('/oidc/complete/', data={
             'code': '12345'}).status_code)

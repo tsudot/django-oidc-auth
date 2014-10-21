@@ -62,6 +62,9 @@ def login_complete(request, login_complete_view='oidc-complete',
             'error': request.GET['error']
         })
 
+    if 'oidc_state' not in request.session:
+        return redirect(settings.LOGIN_URL)
+
     if 'code' not in request.GET and 'state' not in request.GET:
         return HttpResponseBadRequest('Invalid request')
 
