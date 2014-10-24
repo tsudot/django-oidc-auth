@@ -248,6 +248,20 @@ class OpenIDUser(models.Model):
 
             user.save()
 
+        # Avoid duplicate user key
+        try:
+            oidc_acc = cls.objects.get(user=user)
+
+            oidc_acc.sub= id_token['sub']
+            oidc_acc.access_token = access_token
+            oidc_acc.refresh_token = refresh_token
+            oidc_acc.save()
+
+            log.debug('OpenIDUser found, sub %s' % oidc_acc.sub)
+            return oidc_acc
+        except cls.DoesNotExist:
+            log.debug("OpenIDUser for sub %s not found, so it'll be created" % id_token['sub'])
+
         return cls.objects.create(sub=id_token['sub'], issuer=provider,
                 user=user, access_token=access_token, refresh_token=refresh_token)
 
