@@ -14,8 +14,6 @@ from . import errors
 from .settings import oidc_settings
 from .utils import log, b64decode
 
-UserModel = get_user_model()
-
 
 class Nonce(models.Model):
     issuer_url = models.URLField()
@@ -211,6 +209,8 @@ class OpenIDUser(models.Model):
 
     @classmethod
     def get_or_create(cls, id_token, access_token, refresh_token, provider):
+        UserModel = get_user_model()
+
         try:
             oidc_acc = cls.objects.get(sub=id_token['sub'])
 
