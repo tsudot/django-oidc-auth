@@ -1,9 +1,5 @@
-from django.contrib.auth import get_user_model
-
-from .utils import log
+from .utils import log, get_user_model
 from .models import OpenIDUser
-
-UserModel = get_user_model()
 
 
 class OpenIDConnectBackend(object):
@@ -11,6 +7,8 @@ class OpenIDConnectBackend(object):
     supports_anonymous_user = True
 
     def get_user(self, user_id):
+        UserModel = get_user_model()
+
         try:
             return UserModel.objects.get(pk=user_id)
         except UserModel.DoesNotExist:

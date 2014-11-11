@@ -5,14 +5,13 @@ from urlparse import urljoin
 import requests
 from django.db import models, IntegrityError
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from jwkest.jwk import load_jwks_from_url
 from jwkest.jws import JWS
 from jwkest.jwk import SYMKey
 
 from . import errors
 from .settings import oidc_settings
-from .utils import log, b64decode
+from .utils import log, b64decode, get_user_model
 
 
 class Nonce(models.Model):
