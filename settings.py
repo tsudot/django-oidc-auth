@@ -77,12 +77,17 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.messages',
     'django.contrib.admin',
+    'south',
     'django_nose',
     'oidc_auth',
 )
 
 TESTABLE_APPS = (
     'oidc_auth',
+)
+
+SKIP_TESTS = (
+    'south',
 )
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
