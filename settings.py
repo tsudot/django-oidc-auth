@@ -77,7 +77,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.messages',
     'django.contrib.admin',
-    'south',
     'django_nose',
     'oidc_auth',
 )
