@@ -12,7 +12,7 @@ setup(
     packages=find_packages(exclude=['*.tests']),
     include_package_data=True,
     install_requires=[
-        'Django',
+        'Django>=1.5',
         'South==1.0.2',
         'pyjwkest==0.6.2',
         'requests',
