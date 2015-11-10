@@ -83,7 +83,7 @@ def login_complete(request, login_complete_view='oidc-complete',
 
     response = requests.post(provider.token_endpoint,
                              auth=provider.client_credentials,
-                             params=params, verify=oidc_settings.VERIFY_SSL)
+                             data=params, verify=oidc_settings.VERIFY_SSL)
 
     if response.status_code != 200:
         raise errors.RequestError(provider.token_endpoint, response.status_code)

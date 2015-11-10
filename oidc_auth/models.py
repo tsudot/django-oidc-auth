@@ -17,7 +17,7 @@ from .utils import log, b64decode, get_user_model
 class Nonce(models.Model):
     issuer_url = models.URLField()
     state = models.CharField(max_length=255, unique=True)
-    redirect_url = models.CharField(max_length=100)
+    redirect_url = models.CharField(max_length=1000)
 
     def __unicode__(self):
         return '%s' % self.state
@@ -200,8 +200,8 @@ class OpenIDUser(models.Model):
     user = models.OneToOneField(getattr(settings, 'AUTH_USER_MODEL', 'auth.User'),
             related_name='oidc_account')
 
-    access_token = models.CharField(max_length=255)
-    refresh_token = models.CharField(max_length=255)
+    access_token = models.CharField(max_length=1500)
+    refresh_token = models.CharField(max_length=1000)
 
     def __unicode__(self):
         return '%s: %s' % (self.sub, self.user)
