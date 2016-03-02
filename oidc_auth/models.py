@@ -244,10 +244,8 @@ class OpenIDUser(models.Model):
         user.email      = claims['email']
         user.first_name = claims['given_name']
         user.last_name  = claims['family_name']
-        if 'is_superuser' in claims:
-            user.is_superuser = claims['is_superuser']
-        if 'is_staff' in claims:
-            user.is_superuser = claims['is_staff']
+        user.is_superuser = claims.get('is_superuser', False)
+        user.is_staff = claims.get('is_staff', False)
 
         user.set_unusable_password()
         user.save()
