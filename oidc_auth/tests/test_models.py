@@ -3,7 +3,8 @@ import mock
 from nose import tools
 
 from .utils import OIDCTestCase
-from oidc_auth.models import OpenIDProvider, get_default_provider
+from django.contrib.auth.models import User
+from oidc_auth.models import OpenIDProvider, get_default_provider, OpenIDUser
 from oidc_auth.settings import oidc_settings
 
 
@@ -87,3 +88,80 @@ class TestOpenIDPRovider(OIDCTestCase):
             foo.__dict__.update(update_args)
 
         return foo
+
+
+class TestOpenIDUser(OIDCTestCase):
+    @mock.patch('requests.get')
+    def test_create_new_superuser(self, get_mock):
+        get_mock.return_value = self.response_mock
+        provider = OpenIDProvider.discover(issuer=self.issuer)
+
+        with mock.patch.object(OpenIDUser, '_get_userinfo') as get_userinfo:
+            get_userinfo.return_value = {
+                'preferred_username': 'admin',
+                'email': 'admin@admin.com',
+                'given_name': 'foo',
+                'family_name': 'bar',
+                'is_superuser': True,
+                'is_staff': True
+            }
+
+            oidc_user = OpenIDUser.get_or_create(
+                id_token={'sub': 'admin'},
+                access_token='foo',
+                refresh_token='bar',
+                provider=provider
+            )
+
+        user = User.objects.get(username='admin')
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.is_staff)
+
+    @mock.patch('requests.get')
+    def test_override_data_existing_user(self, get_mock):
+        get_mock.return_value = self.response_mock
+        provider = OpenIDProvider.discover(issuer=self.issuer)
+        user = User.objects.create_superuser('admin', 'admin@admin.com', 'admin password')
+
+        with mock.patch.object(OpenIDUser, '_get_userinfo') as get_userinfo:
+            get_userinfo.return_value = {
+                'preferred_username': 'admin',
+                'email': 'new_admin@admin.com',
+                'given_name': 'foo',
+                'family_name': 'bar'
+            }
+
+            oidc_user = OpenIDUser.get_or_create(
+                id_token={'sub': 'admin'},
+                access_token='foo',
+                refresh_token='bar',
+                provider=provider
+            )
+
+        user = User.objects.get(username='admin')
+        self.assertEqual(user.email, 'new_admin@admin.com')
+
+    @mock.patch('requests.get')
+    def test_revoke_permissions_existing_user(self, get_mock):
+        get_mock.return_value = self.response_mock
+        provider = OpenIDProvider.discover(issuer=self.issuer)
+        user = User.objects.create_superuser('admin', 'admin@admin.com', 'admin password')
+
+        with mock.patch.object(OpenIDUser, '_get_userinfo') as get_userinfo:
+            get_userinfo.return_value = {
+                'preferred_username': 'admin',
+                'email': 'admin@admin.com',
+                'given_name': 'foo',
+                'family_name': 'bar'
+            }
+
+            oidc_user = OpenIDUser.get_or_create(
+                id_token={'sub': 'admin'},
+                access_token='foo',
+                refresh_token='bar',
+                provider=provider
+            )
+
+        user = User.objects.get(username='admin')
+        self.assertFalse(user.is_superuser)
+        self.assertFalse(user.is_staff)

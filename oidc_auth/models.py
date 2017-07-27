@@ -234,18 +234,21 @@ class OpenIDUser(models.Model):
             log.debug('User with username %s not found locally, '
                       'so it will be created' % id_token['sub'])
 
-            claims = cls._get_userinfo(provider, id_token['sub'],
-                    access_token, refresh_token)
-
             user = UserModel()
 
-            user.username   = claims['preferred_username']
-            user.email      = claims['email']
-            user.first_name = claims['given_name']
-            user.last_name  = claims['family_name']
-            user.set_unusable_password()
+        # Always update user's local data
+        claims = cls._get_userinfo(provider, id_token['sub'],
+                                   access_token, refresh_token)
 
-            user.save()
+        user.username   = claims['preferred_username']
+        user.email      = claims['email']
+        user.first_name = claims['given_name']
+        user.last_name  = claims['family_name']
+        user.is_superuser = claims.get('is_superuser', False)
+        user.is_staff = claims.get('is_staff', False)
+
+        user.set_unusable_password()
+        user.save()
 
         # Avoid duplicate user key
         try:
@@ -265,7 +268,7 @@ class OpenIDUser(models.Model):
                 user=user, access_token=access_token, refresh_token=refresh_token)
 
     @classmethod
-    def _get_userinfo(self, provider, sub, access_token, refresh_token):
+    def _get_userinfo(cls, provider, sub, access_token, refresh_token):
         # TODO encapsulate this?
         log.debug('Requesting userinfo in %s. sub: %s, access_token: %s' % (
             provider.userinfo_endpoint, sub, access_token))
@@ -282,7 +285,7 @@ class OpenIDUser(models.Model):
             raise errors.InvalidUserInfo()
 
         name = '%s %s' % (claims['given_name'], claims['family_name'])
-        log.debug('userinfo of sub: %s -> name: %s, preferred_username: %s, email: %s' % (sub,
+        log.debug('t userinfo of sub: %s -> name: %s, preferred_username: %s, email: %s' % (sub,
             name, claims['preferred_username'], claims['email']))
 
         return claims
